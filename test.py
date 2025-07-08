@@ -16,8 +16,6 @@ from llama_index.core.response_synthesizers import TreeSummarize
 
 from llama_index.core.memory import ChatMemoryBuffer
 
-
-
 # Load env vars once
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
@@ -124,8 +122,8 @@ def main():
     - 🗓️ **Timetables**
     - 🔐 **Login and password help**
 
-    My knowledge comes from the official UTAS help portal:  
-    👉 [Ask Us – UTAS Help Portal](https://askus.utas.edu.au/)
+    My knowledge comes from the official Ask Us - UTAS portal:  
+    👉 [Ask Us - UTAS](https://askus.utas.edu.au/)
 
     Not sure what to ask? Here are some examples:
     - *“How do I enrol in my units?”*

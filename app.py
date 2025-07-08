@@ -16,11 +16,18 @@ from llama_index.core.response_synthesizers import TreeSummarize
 
 from llama_index.core.memory import ChatMemoryBuffer
 
+
+
 # Load env vars once
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 os.environ["GROQ_API_KEY"] = api_key
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
+# CHROMA_PATH = "chroma_db"
+# INDEX_PATH = "storage"
+# COLLECTION_NAME = "my_collection"
 
 @st.cache_resource
 def load_llm():

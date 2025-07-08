@@ -1,6 +1,13 @@
 import streamlit as st
 import os
 from dotenv import load_dotenv
+
+# Force pysqlite3 to override sqlite3
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+
 import chromadb
 
 from llama_index.core import StorageContext, load_index_from_storage

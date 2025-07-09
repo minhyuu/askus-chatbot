@@ -197,26 +197,52 @@ def main():
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
 
-                # response = chat_engine.chat(prompt)
+                response = chat_engine.chat(prompt)
 
-                # RELEVANCE_THRESHOLD = 0.5  # tweak this value as needed
+                RELEVANCE_THRESHOLD = 0.5  # cite only sources with score > 0.5
 
-                # relevant_sources = [
-                #     node.metadata.get("url")
-                #     for node in response.source_nodes
-                #     if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
-                # ]
+                relevant_sources = [
+                    node.metadata.get("url")
+                    for node in response.source_nodes
+                    if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
+                ]
 
-                # if relevant_sources:
-                #     response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
-                # else:
-                #     response_text = response.response
-
-                response_text = chat_engine.chat(prompt)
+                if relevant_sources:
+                    response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
+                else:
+                    response_text = response.response
             
                 # response_text = str(custom_response)
                 st.markdown(response_text)
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text})
+
+
+
+    # Inject custom CSS for chat bubbles and footer
+    st.markdown("""
+        <style>
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color: rgba(248, 249, 250, 0); /* semi-transparent */
+                color: #6c757d;
+                text-align: center;
+                padding: 5px 0;
+                font-size: 0.8rem;
+                z-index: 9999;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # Footer
+    st.markdown("""
+        <div class="footer">
+            © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
+        </div>
+        """, 
+        unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

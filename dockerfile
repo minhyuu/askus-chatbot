@@ -41,7 +41,7 @@ RUN chown -R appuser:appuser /app/chroma_db /app/storage && \
 EXPOSE 8501
 
 # Add health check for Render
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
+# HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Command to run the Streamlit app
 

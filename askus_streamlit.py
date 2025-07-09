@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
 # Force pysqlite3 to override sqlite3
 __import__('pysqlite3')
@@ -25,10 +25,10 @@ from llama_index.core.memory import ChatMemoryBuffer
 
 
 
-# Load env vars once
-load_dotenv()
-api_key = os.getenv("GROQ_API_KEY")
+# load api key from secrets
+api_key = st.secrets["GROQ_API_KEY"]
 os.environ["GROQ_API_KEY"] = api_key
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 

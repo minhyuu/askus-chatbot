@@ -186,7 +186,7 @@ def main():
                 # else:
                 #     response_text = response.response
 
-                response_text = llm.complete(prompt)
+                response_text = chat_engine.chat(prompt)
             
                 # response_text = str(custom_response)
                 st.markdown(response_text)

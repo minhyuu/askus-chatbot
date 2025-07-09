@@ -2,6 +2,12 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 
+# Force pysqlite3 to override sqlite3
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
+
 import chromadb
 
 from llama_index.core import StorageContext, load_index_from_storage
@@ -13,6 +19,8 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core.response_synthesizers import TreeSummarize
+# from llama_index.core.chat_engine import CondenseQuestionChatEngine
+
 from llama_index.core.memory import ChatMemoryBuffer
 
 
@@ -24,6 +32,9 @@ os.environ["GROQ_API_KEY"] = api_key
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
+# CHROMA_PATH = "chroma_db"
+# INDEX_PATH = "storage"
+# COLLECTION_NAME = "my_collection"
 
 @st.cache_resource
 def load_llm():
@@ -95,7 +106,7 @@ def create_chat_engine(index):
 def main():
 
     # UI
-    st.title("🧠 AskUs Chatbot (RAG Model)")
+    st.title("🧠 UniMate Chatbot (RAG Model)")
 
     llm = load_llm()
     embed_model = load_embed_model()
@@ -117,7 +128,7 @@ def main():
 
 
     intro_message = f"""
-    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
+    👋 Hi! I'm **UniMate** — your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
 
     I specialize in answering frequently asked questions about:
     - 📚 **Enrolment**
@@ -133,6 +144,9 @@ def main():
     - *“Where can I find my class timetable?”*
     - *“What should I do if I forgot my password?”*
     - *“When is the fee payment deadline?”*
+
+    If your question is related to these topics, I’ll give you an accurate answer — with source links when available.  
+    Otherwise, I’ll do my best to help or let you know if I don’t have the info yet.
 
     Ready when you are — what would you like to know?
 
@@ -156,10 +170,19 @@ def main():
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
+                # response = query_engine.query(prompt)
+
+                # if is_query(prompt):
+                #     urls = [node.metadata.get("url", "No URL") for node in response.source_nodes]
+                #     response.response += "\n\nSources:\n" + "\n".join(urls)
+                #     custom_response = response.response
+                
+                # else:
+                #     custom_response = response.response
 
                 response = chat_engine.chat(prompt)
 
-                RELEVANCE_THRESHOLD = 0.5  # cite only sources with score > 0.5
+                RELEVANCE_THRESHOLD = 0.5  # tweak this value as needed
 
                 relevant_sources = [
                     node.metadata.get("url")
@@ -175,34 +198,6 @@ def main():
                 # response_text = str(custom_response)
                 st.markdown(response_text)
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text})
-
-
-
-    # Inject custom CSS for chat bubbles and footer
-    st.markdown("""
-        <style>
-            .footer {
-                position: fixed;
-                left: 0;
-                bottom: 0;
-                width: 100%;
-                background-color: rgba(248, 249, 250, 0); /* semi-transparent */
-                color: #6c757d;
-                text-align: center;
-                padding: 5px 0;
-                font-size: 0.8rem;
-                z-index: 9999;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
-    # Footer
-    st.markdown("""
-        <div class="footer">
-            © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
-        </div>
-        """, 
-        unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

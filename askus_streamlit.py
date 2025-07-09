@@ -115,11 +115,11 @@ def create_index(_embed_model):
 
 
 @st.cache_resource
-def create_chat_engine(index):
+def create_chat_engine(_index):
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
 
-    return index.as_chat_engine(
+    return _index.as_chat_engine(
         chat_mode="context",
         memory=memory,
         system_prompt=(

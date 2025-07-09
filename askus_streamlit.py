@@ -99,22 +99,22 @@ def create_index(_embed_model):
     
     return index
 
+# @st.cache_resource
+# def create_query_engine(_llm, _embed_model, _index):
+#     vector_retriever = VectorIndexRetriever(index=_index, similarity_top_k=2)
+#     query_transform = HyDEQueryTransform(llm=_llm)
+#     synthesizer = TreeSummarize(llm=_llm)
+
+#     return RetrieverQueryEngine.from_args(
+#         retriever=vector_retriever,
+#         response_synthesizer=synthesizer,
+#         query_transform=query_transform,
+#         citation_chunk_size=1024,
+#         citation_retriever=vector_retriever,
+#     )
+
+
 @st.cache_resource
-def create_query_engine(_llm, _embed_model, _index):
-    vector_retriever = VectorIndexRetriever(index=_index, similarity_top_k=2)
-    query_transform = HyDEQueryTransform(llm=_llm)
-    synthesizer = TreeSummarize(llm=_llm)
-
-    return RetrieverQueryEngine.from_args(
-        retriever=vector_retriever,
-        response_synthesizer=synthesizer,
-        query_transform=query_transform,
-        citation_chunk_size=1024,
-        citation_retriever=vector_retriever,
-    )
-
-
-
 def create_chat_engine(index):
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
@@ -154,7 +154,7 @@ def main():
 
 
     intro_message = f"""
-    👋 Hi! I'm **UniMate** — your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
+    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
 
     I specialize in answering frequently asked questions about:
     - 📚 **Enrolment**
@@ -170,9 +170,6 @@ def main():
     - *“Where can I find my class timetable?”*
     - *“What should I do if I forgot my password?”*
     - *“When is the fee payment deadline?”*
-
-    If your question is related to these topics, I’ll give you an accurate answer — with source links when available.  
-    Otherwise, I’ll do my best to help or let you know if I don’t have the info yet.
 
     Ready when you are — what would you like to know?
 

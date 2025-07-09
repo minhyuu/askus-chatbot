@@ -170,30 +170,23 @@ def main():
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                # response = query_engine.query(prompt)
 
-                # if is_query(prompt):
-                #     urls = [node.metadata.get("url", "No URL") for node in response.source_nodes]
-                #     response.response += "\n\nSources:\n" + "\n".join(urls)
-                #     custom_response = response.response
-                
+                # response = chat_engine.chat(prompt)
+
+                # RELEVANCE_THRESHOLD = 0.5  # tweak this value as needed
+
+                # relevant_sources = [
+                #     node.metadata.get("url")
+                #     for node in response.source_nodes
+                #     if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
+                # ]
+
+                # if relevant_sources:
+                #     response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
                 # else:
-                #     custom_response = response.response
+                #     response_text = response.response
 
-                response = chat_engine.chat(prompt)
-
-                RELEVANCE_THRESHOLD = 0.5  # tweak this value as needed
-
-                relevant_sources = [
-                    node.metadata.get("url")
-                    for node in response.source_nodes
-                    if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
-                ]
-
-                if relevant_sources:
-                    response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
-                else:
-                    response_text = response.response
+                response_text = llm.complete(prompt)
             
                 # response_text = str(custom_response)
                 st.markdown(response_text)

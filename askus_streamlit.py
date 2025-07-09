@@ -136,7 +136,7 @@ def create_chat_engine(_index):
 def main():
 
     # UI
-    st.title("🧠 UniMate Chatbot (RAG Model)")
+    st.title("🧠 AskUs Chatbot (RAG Model)")
 
     llm = load_llm()
     embed_model = load_embed_model()
@@ -216,30 +216,30 @@ def main():
 
 
     # Inject custom CSS for chat bubbles and footer
-    st.markdown("""
-        <style>
-            .footer {
-                position: fixed;
-                left: 0;
-                bottom: 0;
-                width: 100%;
-                background-color: rgba(248, 249, 250, 0); /* semi-transparent */
-                color: #6c757d;
-                text-align: center;
-                padding: 5px 0;
-                font-size: 0.8rem;
-                z-index: 9999;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    # st.markdown("""
+    #     <style>
+    #         .footer {
+    #             position: fixed;
+    #             left: 0;
+    #             bottom: 0;
+    #             width: 100%;
+    #             background-color: rgba(248, 249, 250, 0); /* semi-transparent */
+    #             color: #6c757d;
+    #             text-align: center;
+    #             padding: 5px 0;
+    #             font-size: 0.8rem;
+    #             z-index: 9999;
+    #         }
+    #     </style>
+    # """, unsafe_allow_html=True)
 
-    # Footer
-    st.markdown("""
-        <div class="footer">
-            © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
-        </div>
-        """, 
-        unsafe_allow_html=True)
+    # # Footer
+    # st.markdown("""
+    #     <div class="footer">
+    #         © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
+    #     </div>
+    #     """, 
+    #     unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

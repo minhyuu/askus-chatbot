@@ -43,9 +43,9 @@ WORKDIR /app
 
 # Update pip and install dependencies
 COPY requirements.txt /app/
-RUN pip install --upgrade pip
 
-RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org -r /app/requirements.txt
+RUN pip install --no-cache-dir  && \
+    -r /app/requirements.txt
 
 # Copy the application code and ChromaDB/storage directories
 COPY app.py /app/
@@ -56,7 +56,8 @@ COPY storage /app/storage/
 WORKDIR /app
 
 # Set permissions for chroma_db and storage directories
-RUN chown -R appuser:appuser /app/chroma_db /app/storage && chmod -R 775 /app/chroma_db /app/storage
+RUN chown -R appuser:appuser /app/chroma_db /app/storage && \
+    chmod -R 775 /app/chroma_db /app/storage
 
 # Expose the Streamlit port
 

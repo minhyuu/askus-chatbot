@@ -1,11 +1,11 @@
 import streamlit as st
 import os
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 # Force pysqlite3 to override sqlite3
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# __import__('pysqlite3')
+# import sys
+# sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 
 import chromadb
@@ -32,11 +32,11 @@ from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageCon
 
 
 # load api key from secrets
-api_key = st.secrets["GROQ_API_KEY"]
-os.environ["GROQ_API_KEY"] = api_key
-# load_dotenv()
-# api_key = os.getenv("GROQ_API_KEY")
+# api_key = st.secrets["GROQ_API_KEY"]
 # os.environ["GROQ_API_KEY"] = api_key
+load_dotenv()
+api_key = os.getenv("GROQ_API_KEY")
+os.environ["GROQ_API_KEY"] = api_key
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"

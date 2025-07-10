@@ -145,9 +145,11 @@ if __name__ == "__main__":
     #     data = crawl_content(faq_link) 
     #     knowledge_base.extend(data)  # Add the crawled data to the knowledge base
 
-    faq_link = f"https://askus.utas.edu.au/app/answers/list/st/5/kw/fees/page/8"
-    data = crawl_content(faq_link) 
-    knowledge_base.extend(data)  # Add the crawled data to the knowledge base
+    # scholarships
+    for page_number in range(1, 4):
+        faq_link = f"https://askus.utas.edu.au/app/answers/list/st/5/kw/scholarships/page/{page_number}"
+        data = crawl_content(faq_link) 
+        knowledge_base.extend(data)
 
     # convert knowledge base to json
     import json

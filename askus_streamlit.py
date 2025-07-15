@@ -158,9 +158,9 @@ def main():
 
 
     intro_message = f"""
-    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
+    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)**.
 
-    I specialize in answering frequently asked questions about:
+    I specialise in answering frequently asked questions about:
     - 📚 **Enrolment**
     - 💰 **Fees and payment options**
     - 🗓️ **Timetables**
@@ -176,8 +176,7 @@ def main():
     - *“When is the fee payment deadline?”*
 
     Ready when you are — what would you like to know?
-
-        """
+    """
     
     # Greet the user only once
     if "greeted" not in st.session_state:
@@ -190,6 +189,8 @@ def main():
 
     prompt = st.chat_input("Ask me something...")
 
+    RELEVANCE_THRESHOLD = 0.5  # threshold to filter out low relevance sources
+
     if prompt:
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -197,53 +198,57 @@ def main():
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-
                 response = chat_engine.chat(prompt)
-
-                RELEVANCE_THRESHOLD = 0.5  # cite only sources with score > 0.5
 
                 relevant_sources = [
                     node.metadata.get("url")
-                    for node in response.source_nodes
+                    for node in response.source_nodes or []
                     if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
                 ]
 
                 if relevant_sources:
-                    response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
+                    response_text = f"{response.response}\n\n**Sources:**\n" + "\n".join(relevant_sources)
                 else:
-                    response_text = response.response
-            
-                # response_text = str(custom_response)
+                    # if no relevant sources, provide a revised response
+                    revised_prompt = (
+                        f"You are an assistant restricted to only provide answers based on the knowledge base. "
+                        f"The retrieved sources has low relevant level"
+                        f"Please revise your answer if user query related to your expertise. "
+                        f"If users ask about general topics or make casual small talk (e.g., 'Who are you?', 'What can you do?', 'How are you?'), respond in a natural, friendly, and conversational tone like a chatbot companion. "
+                    )
+                    revised_response = chat_engine.chat(revised_prompt)
+                    response_text = revised_response.response
+
                 st.markdown(response_text)
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text})
 
 
 
-    # Inject custom CSS for chat bubbles and footer
-    # st.markdown("""
-    #     <style>
-    #         .footer {
-    #             position: fixed;
-    #             left: 0;
-    #             bottom: 0;
-    #             width: 100%;
-    #             background-color: rgba(248, 249, 250, 0); /* semi-transparent */
-    #             color: #6c757d;
-    #             text-align: center;
-    #             padding: 5px 0;
-    #             font-size: 0.8rem;
-    #             z-index: 9999;
-    #         }
-    #     </style>
-    # """, unsafe_allow_html=True)
+    # Inject custom CSS for footer
+    st.markdown("""
+        <style>
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                width: 100%;
+                background-color: rgba(248, 249, 250, 0); /* semi-transparent */
+                color: #6c757d;
+                text-align: center;
+                padding: 5px 0;
+                font-size: 0.8rem;
+                z-index: 9999;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-    # # Footer
-    # st.markdown("""
-    #     <div class="footer">
-    #         © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
-    #     </div>
-    #     """, 
-    #     unsafe_allow_html=True)
+    # Footer
+    st.markdown("""
+        <div class="footer">
+            Chat bot may not always provide accurate information.
+        </div>
+        """, 
+        unsafe_allow_html=True)
 
 
 if __name__ == "__main__":

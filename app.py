@@ -13,17 +13,20 @@ from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.indices.query.query_transform import HyDEQueryTransform
 from llama_index.core.response_synthesizers import TreeSummarize
+# from llama_index.core.chat_engine import CondenseQuestionChatEngine
+
 from llama_index.core.memory import ChatMemoryBuffer
+from llama_index.vector_stores.chroma import ChromaVectorStore
+import json
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext, Document
 
 
-
-# Load env vars once
-load_dotenv()
+# load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
 os.environ["GROQ_API_KEY"] = api_key
+
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-
 
 @st.cache_resource
 def load_llm():
@@ -34,61 +37,71 @@ def load_embed_model():
     return HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
 @st.cache_resource
-def load_vector_store():
-    chroma_client = chromadb.PersistentClient(path="chroma_db")
+def create_index(_embed_model):
+    """
+    Create and return a VectorStoreIndex.
+    This function is cached to avoid re-creating the index on every run.
+    """
+    
+    # Chroma vector store
+    CHROMA_DIR = "chroma_db"
+    if not os.path.exists(CHROMA_DIR):
+        os.makedirs(CHROMA_DIR)
+
+    chroma_client = chromadb.PersistentClient(path=CHROMA_DIR)
     chroma_collection = chroma_client.get_or_create_collection("my_collection")
-    return ChromaVectorStore(chroma_collection=chroma_collection)
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 
-@st.cache_resource
-def load_index(_vector_store):
+    # storage context
     storage_context = StorageContext.from_defaults(
-        persist_dir="storage", vector_store=_vector_store
+        vector_store=vector_store)
+
+    # Load knowledge base
+    with open("knowledge_base.json", "r", encoding="utf-8") as f:
+        raw_data = json.load(f)
+
+    # convert data to Document and embed
+    documents = []
+    for entry in raw_data:
+        doc = Document(
+            text=entry['content'],
+            metadata={
+                "title": entry['title'], 
+                "url": entry['source']
+            }
+        )
+        documents.append(doc)
+
+    # create index and persist
+    index = VectorStoreIndex.from_documents(
+        documents,
+        storage_context=storage_context,
+        embed_model=_embed_model
     )
-    return load_index_from_storage(storage_context)
+    
+    return index
+
 
 @st.cache_resource
-def create_query_engine(_llm, _embed_model, _index):
-    vector_retriever = VectorIndexRetriever(index=_index, similarity_top_k=2)
-    query_transform = HyDEQueryTransform(llm=_llm)
-    synthesizer = TreeSummarize(llm=_llm)
-
-    return RetrieverQueryEngine.from_args(
-        retriever=vector_retriever,
-        response_synthesizer=synthesizer,
-        query_transform=query_transform,
-        citation_chunk_size=1024,
-        citation_retriever=vector_retriever,
-    )
-
-
-def is_query(text):
-    # Kiểm tra đơn giản xem input có phải câu hỏi không
-    question_words = [
-        "what", "how", "why", "when", "where", "who",
-        "is", "are", "can", "do", "does"
-    ]
-    text_lower = text.lower().strip()
-    if text_lower.endswith("?"):
-        return True
-    if any(text_lower.startswith(qw + " ") for qw in question_words):
-        return True
-    return False
-
-def create_chat_engine(index):
+def create_chat_engine(_index):
 
     memory = ChatMemoryBuffer.from_defaults(token_limit=1500)
 
-    return index.as_chat_engine(
+    return _index.as_chat_engine(
         chat_mode="context",
         memory=memory,
         system_prompt=(
-              "You are a helpful and friendly virtual assistant for the University of Tasmania (UTAS). "
-        "You specialize in answering questions about enrollment, fees, timetables, login and password at UTAS. "
-        "For these topics, you should answer clearly and professionally based on your knowledge base. "
-        "If the user asks general or casual questions (e.g., 'Who are you?', 'What can you do?', 'How are you?'), "
-        "respond in a natural, friendly tone like a chatbot companion. "
-        "If the question is unrelated to your area of expertise and you don’t know the answer, it’s okay to say 'I'm not sure about that.'"
-    ),
+        "You are a helpful and professional virtual assistant for the University of Tasmania (UTAS). "
+        "You specialize in answering questions about topics such as enrollment, fees, timetables, scholarships, login and password help at UTAS. "
+        "Your answers must be accurate and based strictly on the provided knowledge base. "
+        "If you are unsure or don't know the answer, clearly say so. For example: 'I'm not sure about that, but you can contact UConnect for further assistance.' "
+        "Avoid making up information. Do not guess unless you make it clear that it is only a general suggestion. For example: 'This is just my suggestion based on common practice at UTAS...' "
+        "If users ask about general topics or make casual small talk (e.g., 'Who are you?', 'What can you do?', 'How are you?'), respond in a natural, friendly, and conversational tone like a chatbot companion. "
+        "If users ask questions outside your area of expertise, politely let them know. You can still engage in a helpful way, and recommend relevant UTAS support services such as:\n"
+        "- UConnect (for general support and inquiries)\n"
+        "- Student Advisers (for study-related questions and academic support)\n"
+        "- Learning Advisers (for help with academic writing, assignments, and learning strategies)"
+        )
     )
 
 
@@ -103,23 +116,19 @@ def main():
     Settings.llm = llm
     Settings.embed_model = embed_model
 
-
-
     # Ensure chat_history is initialized before any access
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    
-    vector_store = load_vector_store()
-    index = load_index(vector_store)
+    index = create_index(embed_model)
     # query_engine = create_query_engine(llm, embed_model, index)
     chat_engine = create_chat_engine(index)
 
 
     intro_message = f"""
-    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)** 
+    👋 Hi! I'm your friendly assistant for common questions at the **University of Tasmania (UTAS)**.
 
-    I specialize in answering frequently asked questions about:
+    I specialise in answering frequently asked questions about:
     - 📚 **Enrolment**
     - 💰 **Fees and payment options**
     - 🗓️ **Timetables**
@@ -135,8 +144,7 @@ def main():
     - *“When is the fee payment deadline?”*
 
     Ready when you are — what would you like to know?
-
-        """
+    """
     
     # Greet the user only once
     if "greeted" not in st.session_state:
@@ -149,6 +157,8 @@ def main():
 
     prompt = st.chat_input("Ask me something...")
 
+    RELEVANCE_THRESHOLD = 0.5  # threshold to filter out low relevance sources
+
     if prompt:
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -156,29 +166,33 @@ def main():
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-
                 response = chat_engine.chat(prompt)
-
-                RELEVANCE_THRESHOLD = 0.5  # cite only sources with score > 0.5
 
                 relevant_sources = [
                     node.metadata.get("url")
-                    for node in response.source_nodes
+                    for node in response.source_nodes or []
                     if node.metadata.get("url") and node.score and node.score > RELEVANCE_THRESHOLD
                 ]
 
                 if relevant_sources:
-                    response_text = f"{response.response}\n\nSources:\n" + "\n".join(relevant_sources)
+                    response_text = f"{response.response}\n\n**Sources:**\n" + "\n".join(relevant_sources)
                 else:
-                    response_text = response.response
-            
-                # response_text = str(custom_response)
+                    # if no relevant sources, provide a revised response
+                    revised_prompt = (
+                        f"You are an assistant restricted to only provide answers based on the knowledge base. "
+                        f"The retrieved sources has low relevant level"
+                        f"Please revise your answer if user query related to your expertise. "
+                        f"If users ask about general topics or make casual small talk (e.g., 'Who are you?', 'What can you do?', 'How are you?'), respond in a natural, friendly, and conversational tone like a chatbot companion. "
+                    )
+                    revised_response = chat_engine.chat(revised_prompt)
+                    response_text = revised_response.response
+
                 st.markdown(response_text)
                 st.session_state.chat_history.append({"role": "assistant", "content": response_text})
 
 
 
-    # Inject custom CSS for chat bubbles and footer
+    # Inject custom CSS for footer
     st.markdown("""
         <style>
             .footer {
@@ -199,7 +213,7 @@ def main():
     # Footer
     st.markdown("""
         <div class="footer">
-            © 2025 AskUs Chatbot | Built by <a href="https://minhyuu.github.io/" target="_blank">Danny</a>
+            Chat bot may not always provide accurate information.
         </div>
         """, 
         unsafe_allow_html=True)
